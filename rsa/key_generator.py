@@ -233,17 +233,48 @@ def chunk_text(message):
     segments = [message[i:i+3] for i in range(0, len(message), 3)]
     return segments
 
+def multiply_mod_square(num, e, n):
+    
+    current_mod = 1
+    
+    for i in range(0,e):
+        current_mod = (current_mod*num)%n
+        # print(i, current_mod)
+    
+    return current_mod
+    
+
+def square_multiply(num, e, n):
+    exp_bin = bin(e)
+    print(exp_bin)
+    current_mod = 1
+    value = num
+    
+    for i in range(len(exp_bin)-1, 1, -1):
+        
+        if(exp_bin[i]=='1'):
+            current_mod = (current_mod * value)%n
+            print("current_mod: ", current_mod)
+        
+        value = value**2
+        
+    return current_mod
+
 def encrypt(e, n, message):
+    
+    # value = multiply_mod_square(7,6,11)
+    # print(value)
     
     message_segments = chunk_text(message)
     # print(message_segments)
     
     message_values = [int(str_to_hexadecimal(message_segments[i]),16) for i in range(len(message_segments))]
-    # print(message_values)
+    print(message_values)
     
     encrypted_values = []
     for i in range(len(message_values)):
-        c = (message_values[i]**e)%n
+        c = multiply_mod_square(message_values[i],e,n)
+        print(c)
         encrypted_values.append(c)
     
     #encrypted_message = num_to_ascii(encrypted_values)
@@ -268,20 +299,24 @@ def decipher(e, n, encrypted_values):
     
     hex_values = num_to_hex(message_values)
     # print(message_values)
-    # print(hex_values)
+    print(hex_values)
         
     message = ''.join([bytes.fromhex(chunk[2:]).decode('utf-8') for chunk in hex_values])
+    
+    # message = "2"
+    # for chunk in hex_values:
+    #     print(bytes.fromhex(chunk[2:]).decode('utf-8'))
     
     return message
 
     
 if __name__=="__main__":
     
-    # e = 672961497
-    # n = 3497594377
-    e = 32771
-    n = 2814797023
-    message = "Hello Vignesh"
+    e = 672961497
+    n = 3497594377
+    # e = 32771
+    # n = 2814797023
+    message = "Encryption by Tomas Navarro"
     
     # print(chunk_text(message))
     
@@ -296,6 +331,8 @@ if __name__=="__main__":
     
     encrypted_values = encrypt(e,n,message)
     print(encrypted_values)
+    
+    # encrypted_values = 	[1131917940, 1103261126, 1555222728, 1190175489, 1954013392, 226677880, 2530775063]
     
     message = decipher(e,n,encrypted_values)
     print(message)
