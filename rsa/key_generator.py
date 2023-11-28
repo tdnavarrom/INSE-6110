@@ -246,17 +246,18 @@ def multiply_mod_square(num, e, n):
 
 def square_multiply(num, e, n):
     exp_bin = bin(e)
-    print(exp_bin)
+    print(exp_bin, len(exp_bin))
     current_mod = 1
-    value = num
+    current_value = num
     
     for i in range(len(exp_bin)-1, 1, -1):
-        
+        # print("i:", i)
         if(exp_bin[i]=='1'):
-            current_mod = (current_mod * value)%n
-            print("current_mod: ", current_mod)
+            current_mod = (current_mod * current_value)%n
+            # print("i:", i)
+            # print("current_mod: ", current_mod)
         
-        value = value**2
+        current_value = (current_value**2)%n
         
     return current_mod
 
@@ -309,34 +310,82 @@ def decipher(e, n, encrypted_values):
     
     return message
 
+def sign(d, n, message):
+    
+    # value = multiply_mod_square(7,6,11)
+    # print(value)
+    
+    message_segments = chunk_text(message)
+    # print(message_segments)
+    
+    message_values = [int(str_to_hexadecimal(message_segments[i]),16) for i in range(len(message_segments))]
+    print(message_values)
+    
+    signed_values = []
+    for i in range(len(message_values)):
+        c = square_multiply(message_values[i],d,n)
+        print(c)
+        signed_values.append(c)
+    
+    #encrypted_message = num_to_ascii(encrypted_values)
+    return signed_values   
+    #return encrypted_message
+
+def verify(e, n, signed_values):
+    
+    message_values = []
+    for i in range(len(signed_values)):
+        c = square_multiply(signed_values[i],e,n)
+        print(c)
+        message_values.append(c)    
+    
+    
+    hex_values = num_to_hex(message_values)
+    # print(message_values)
+    print(hex_values)
+        
+    message = ''.join([bytes.fromhex(chunk[2:]).decode('utf-8') for chunk in hex_values])
+    
+    # message = "2"
+    # for chunk in hex_values:
+    #     print(bytes.fromhex(chunk[2:]).decode('utf-8'))
+    
+    return message
+
     
 if __name__=="__main__":
     
-    e = 672961497
-    n = 3497594377
-    # e = 32771
-    # n = 2814797023
-    message = "Encryption by Tomas Navarro"
+    # e = 672961497
+    # n = 3497594377
+    e = 32771
+    n = 2814797023
+    d =  1256909531
+    # message = "Encryption by Tomas Navarro"
+    message = "Tomas Navarro"
+    print(chunk_text(message))
     
-    # print(chunk_text(message))
+    hex_chunk = chunk_text(message)
+    chunk = str_to_hexadecimal(hex_chunk[0])
     
-    # hex_chunk = chunk_text(message)
-    # chunk = str_to_hexadecimal(hex_chunk[0])
-    
-    # decimal = int(chunk, 16)
-    # print(decimal)
+    decimal = int(chunk, 16)
+    print(decimal)
     
     # c = (decimal**e)%n
     # print(c) 
     
-    encrypted_values = encrypt(e,n,message)
-    print(encrypted_values)
+    # encrypted_values = encrypt(e,n,message)
+    # print(encrypted_values)
     
     # encrypted_values = 	[1131917940, 1103261126, 1555222728, 1190175489, 1954013392, 226677880, 2530775063]
     
-    message = decipher(e,n,encrypted_values)
-    print(message)
+    # message = decipher(e,n,encrypted_values)
+    # print(message)
     
+    signed_values = sign(d, n, message)
+    print(signed_values)
+    
+    message = verify(e,n,signed_values)
+    print(message)
     
     # m = 72
     # c = (m**e)%n
@@ -349,3 +398,10 @@ if __name__=="__main__":
     # q = 57301
     # m = decouple_m(c, d, p, q)
     # print(m)
+    
+    # d = 5
+    # m = 11
+    # n = 551
+    
+    # c = square_multiply(m,d,n)
+    # print(c)
