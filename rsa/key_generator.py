@@ -1,5 +1,6 @@
 import numpy as np
-from math_operations import calculate_gcd_inverse
+from math_operations import *
+from bin_operations import *
 
 first_primes = [2,3,5,7]
 
@@ -15,50 +16,6 @@ def generate_num(min_num=32768, max_num=65535, d_type=np.uint16):
 
     return random
 
-
-def is_prime(num):
-
-    square_root = np.emath.sqrt(num).astype(int)+1
-    square_root_limiter = int(square_root/6)+1
-
-    if num in first_primes:
-        return True
-    
-    if (num % 2 == 0 or num % 3 == 0):
-        return False
-    else:
-        for i in range(1, square_root_limiter):
-            possible_prime1=6*i-1
-            possible_prime2=6*i+1
-            if num % possible_prime1 == 0 or num % possible_prime2 == 0:
-                return False
-
-    return True
-
-def prime_factor(num):
-    
-    square_root = np.emath.sqrt(num).astype(int)+1
-    square_root_limiter = int(square_root/6)+1
-    primes = []
-
-    if (num % 2 == 0):
-        primes.append(2)
-        primes.append(int(num/2))
-    if(num % 3 == 0):
-        primes.append(3)
-        primes.append(int(num/3))
-    
-    for i in range(1, square_root_limiter):
-        possible_prime1=6*i-1
-        possible_prime2=6*i+1
-        if num % possible_prime1 == 0:
-            primes.append(possible_prime1)
-            primes.append(int(num/possible_prime1))
-        if num % possible_prime2 == 0:
-            primes.append(possible_prime2)
-            primes.append(int(num/possible_prime2))
-
-    return primes
 
 def generate_prime():
     primes_generated = False
@@ -76,33 +33,6 @@ def generate_prime():
             
     return nums_lists
 
-
-def calculate_n_phi(p,q):
-    
-    n = p*q
-    phi_n = (p-1)*(q-1)
-    
-    return n,phi_n
-
-def calculate_gcd(lnum, mnum):
-    
-    #print("lnum: {}, mnum: {}".format(lnum, mnum))
-    
-    a = lnum
-    b = mnum
-    temp = a
-    
-    while temp:
-        temp = np.int64(b % a)
-        
-        #print("a: {}, b: {}, temp: {}".format(a,b,temp))
-        if temp != 0:
-            b = a
-            a = temp
-
-    gcd = a
-    
-    return gcd
 
 def look_for_prime(num):
     
@@ -131,19 +61,7 @@ def look_for_prime(num):
 
 def generate_public_key(phi_n):
     
-    # e_generated = False
-    
-    # not_valid = {}
     e = look_for_prime(phi_n)
-        
-        # if e not in not_valid:
-        #     gcd = calculate_gcd(e, phi_n)
-        #     if gcd == 1:
-        #         e_generated = True
-        #     else:
-        #         not_valid[e] = "Not valid"
-    
-    # print("aca")
     return e
 
 def calculate_private_key(e, phi_n):
@@ -161,14 +79,9 @@ def load_information(e,p,q):
     return n,phi_n,d
 
 def decouple_m(c, d, p, q):
-    # print(c, d, p, q)
     temp_mp = c%p
-    # print(temp_mp)
     temp_dp = d%(p-1)
-    # print(temp_dp)
     mp = (temp_mp**temp_dp)%p
-    # print(type(mp))
-    # print(mp)
     
     q_inverse = calculate_private_key(q, p)
     
@@ -185,26 +98,81 @@ def decouple_m(c, d, p, q):
     
     return m
 
-def ascii_to_num(message):
+def encrypt(e, n, message):
     
-    ascii_values = [ord(char) for char in message]
-    return ascii_values
+    message_segments = chunk_text(message)
+    # print(message_segments)
+    
+    message_values = [int(str_to_hexadecimal(message_segments[i]),16) for i in range(len(message_segments))]
+    print("Message Values-----------------")
+    print(message_values)
+    
+    encrypted_values = []
+    for i in range(len(message_values)):
+        c = multiply_mod_square(message_values[i],e,n)
+        # print(c)
+        encrypted_values.append(c)
+    
+    #encrypted_message = num_to_ascii(encrypted_values)
+    return encrypted_values   
+    #return encrypted_message
 
-def num_to_ascii(ascii_values):
-    message = ''.join([chr(value) for value in ascii_values])
+def decipher(d, n, p,q, encrypted_values):
+    
+    
+    # p_prime, q_prime = prime_factor(n)
+    # print("p: {}, q: {}".format(p_prime, q_prime))
+
+    # n, phi_n = calculate_n_phi(p, q)
+    # print("n: {}, phi_n: {}".format(n, phi_n))
+
+    # d = calculate_private_key(e, phi_n)
+    # print("d: ",d)
+    
+    message_values = []
+    for i in encrypted_values:
+        m = decouple_m(i, d, p, q)
+        message_values.append(m)
+    
+    hex_values = num_to_hex(message_values)
+    print(hex_values)
+        
+    message = ''.join([bytes.fromhex(chunk[2:]).decode('utf-8') for chunk in hex_values])
+    
+    
     return message
 
-def num_to_hex(num_values):
-    hex_list = [hex(i) for i in num_values]
-    return hex_list
-
-def str_to_hexadecimal(text):
-    # Use list comprehension to get the hexadecimal representation of each character
-    hex = [format(ord(char), '02x') for char in text]
+def sign(d, n, message):
     
-    # Join the list of hexadecimal values into a single string
-    return ''.join(hex)
+    message_segments = chunk_text(message)
+    
+    message_values = [int(str_to_hexadecimal(message_segments[i]),16) for i in range(len(message_segments))]
+    print(message_values)
+    
+    signed_values = []
+    for i in range(len(message_values)):
+        c = square_multiply(message_values[i],d,n)
+        # print(c)
+        signed_values.append(c)
+    
+    return signed_values   
 
+def verify(e, n, signed_values):
+    
+    message_values = []
+    for i in range(len(signed_values)):
+        c = square_multiply(signed_values[i],e,n)
+        # print(c)
+        message_values.append(c)    
+    
+    
+    hex_values = num_to_hex(message_values)
+    print(hex_values)
+        
+    message = ''.join([bytes.fromhex(chunk[2:]).decode('utf-8') for chunk in hex_values])
+    
+    
+    return message
 
 def initialize():
     
@@ -223,185 +191,59 @@ def initialize():
     n, phi_n, d = load_information(5,19,29)
     print("n: {}, phi_n: {}, d: {} ".format(n, phi_n, d))
     
-    message = "Hello, World!"
+    message = "Encryption by Tomas Navarro"
     
     encrypted_message = encrypt(e, n , message)
     print(encrypted_message)
 
 
-def chunk_text(message):
-    segments = [message[i:i+3] for i in range(0, len(message), 3)]
-    return segments
-
-def multiply_mod_square(num, e, n):
+def test():
     
-    current_mod = 1
-    
-    for i in range(0,e):
-        current_mod = (current_mod*num)%n
-        # print(i, current_mod)
-    
-    return current_mod
-    
-
-def square_multiply(num, e, n):
-    exp_bin = bin(e)
-    print(exp_bin, len(exp_bin))
-    current_mod = 1
-    current_value = num
-    
-    for i in range(len(exp_bin)-1, 1, -1):
-        # print("i:", i)
-        if(exp_bin[i]=='1'):
-            current_mod = (current_mod * current_value)%n
-            # print("i:", i)
-            # print("current_mod: ", current_mod)
-        
-        current_value = (current_value**2)%n
-        
-    return current_mod
-
-def encrypt(e, n, message):
-    
-    # value = multiply_mod_square(7,6,11)
-    # print(value)
-    
-    message_segments = chunk_text(message)
-    # print(message_segments)
-    
-    message_values = [int(str_to_hexadecimal(message_segments[i]),16) for i in range(len(message_segments))]
-    print(message_values)
-    
-    encrypted_values = []
-    for i in range(len(message_values)):
-        c = multiply_mod_square(message_values[i],e,n)
-        print(c)
-        encrypted_values.append(c)
-    
-    #encrypted_message = num_to_ascii(encrypted_values)
-    return encrypted_values   
-    #return encrypted_message
-
-def decipher(e, n, encrypted_values):
-    p_prime, q_prime = prime_factor(n)
-    print("p: {}, q: {}".format(p_prime, q_prime))
-
-    n, phi_n = calculate_n_phi(p_prime, q_prime)
-    print("n: {}, phi_n: {}".format(n, phi_n))
-
-    d = calculate_private_key(e, phi_n)
-    print("d: ",d)
-    
-    #encrypted_values = ascii_to_num(encrypted_message)
-    message_values = []
-    for i in encrypted_values:
-        m = decouple_m(i, d, p_prime, q_prime)
-        message_values.append(m)
-    
-    hex_values = num_to_hex(message_values)
-    # print(message_values)
-    print(hex_values)
-        
-    message = ''.join([bytes.fromhex(chunk[2:]).decode('utf-8') for chunk in hex_values])
-    
-    # message = "2"
-    # for chunk in hex_values:
-    #     print(bytes.fromhex(chunk[2:]).decode('utf-8'))
-    
-    return message
-
-def sign(d, n, message):
-    
-    # value = multiply_mod_square(7,6,11)
-    # print(value)
-    
-    message_segments = chunk_text(message)
-    # print(message_segments)
-    
-    message_values = [int(str_to_hexadecimal(message_segments[i]),16) for i in range(len(message_segments))]
-    print(message_values)
-    
-    signed_values = []
-    for i in range(len(message_values)):
-        c = square_multiply(message_values[i],d,n)
-        print(c)
-        signed_values.append(c)
-    
-    #encrypted_message = num_to_ascii(encrypted_values)
-    return signed_values   
-    #return encrypted_message
-
-def verify(e, n, signed_values):
-    
-    message_values = []
-    for i in range(len(signed_values)):
-        c = square_multiply(signed_values[i],e,n)
-        print(c)
-        message_values.append(c)    
-    
-    
-    hex_values = num_to_hex(message_values)
-    # print(message_values)
-    print(hex_values)
-        
-    message = ''.join([bytes.fromhex(chunk[2:]).decode('utf-8') for chunk in hex_values])
-    
-    # message = "2"
-    # for chunk in hex_values:
-    #     print(bytes.fromhex(chunk[2:]).decode('utf-8'))
-    
-    return message
-
-    
-if __name__=="__main__":
-    
-    # e = 672961497
-    # n = 3497594377
     e = 32771
+    p = 49123
+    q = 57301
     n = 2814797023
     d =  1256909531
-    # message = "Encryption by Tomas Navarro"
-    message = "Tomas Navarro"
-    print(chunk_text(message))
+    message = "Encryption by Tomas Navarro"
     
-    hex_chunk = chunk_text(message)
-    chunk = str_to_hexadecimal(hex_chunk[0])
+    # chunk = str_to_hexadecimal(hex_chunk[0])
+    # decimal = int(chunk, 16)
+    # print(decimal)
     
-    decimal = int(chunk, 16)
-    print(decimal)
+    encrypted_values = encrypt(e,n,message)
+    print("Encrypted Values-----------------")
+    print(encrypted_values)
     
-    # c = (decimal**e)%n
-    # print(c) 
     
-    # encrypted_values = encrypt(e,n,message)
-    # print(encrypted_values)
+    print("Partner Message-----------------")
+    encrypted_values = 	[1131917940, 1103261126, 1555222728, 1190175489, 1954013392, 226677880, 2530775063]
+    message_partner = decipher(d,n,p,q ,encrypted_values)
+    print(message_partner)
     
-    # encrypted_values = 	[1131917940, 1103261126, 1555222728, 1190175489, 1954013392, 226677880, 2530775063]
+    print("Signature Message-----------------")
+    message_sign =  "Tomas Navarro"
     
-    # message = decipher(e,n,encrypted_values)
-    # print(message)
+    # print(chunk_text(message_sign))
+    # hex_chunk = chunk_text(message_sign)
     
-    signed_values = sign(d, n, message)
+    signed_values = sign(d, n, message_sign)
     print(signed_values)
+
+
+def test_signature():
     
+    e = 672961497
+    n = 3497594377
+
+    signed_values = [2722866973, 594348302, 3308561343, 1549806427, 3172487038, 518921097]
+    
+    print("Partner Signature Message---------------")
     message = verify(e,n,signed_values)
     print(message)
     
-    # m = 72
-    # c = (m**e)%n
-    # print(c)
-    # m = decipher(e,n,[c])
-    # print(m)
+
+if __name__=="__main__":
     
-    # d = 1256909531
-    # p = 49123
-    # q = 57301
-    # m = decouple_m(c, d, p, q)
-    # print(m)
-    
-    # d = 5
-    # m = 11
-    # n = 551
-    
-    # c = square_multiply(m,d,n)
-    # print(c)
+    initialize()
+    test()
+    test_signature()
