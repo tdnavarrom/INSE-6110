@@ -1,9 +1,12 @@
 import numpy as np
 
+first_primes = [2,3,5,7]
 
 def calculate_gcd_inverse(lnum, mnum):
-    
-    #print("lnum: {}, mnum: {}".format(lnum, mnum))
+    """
+    Calculate the greatest common divisor (gcd) and the modular multiplicative inverse
+    of lnum (a) and mnum (b) using the Extended Euclidean Algorithm.
+    """
     
     a = lnum
     b = mnum
@@ -37,6 +40,10 @@ def calculate_gcd_inverse(lnum, mnum):
 
 def is_prime(num):
 
+    """
+    Check if a given number is prime.
+    """
+    
     square_root = np.emath.sqrt(num).astype(int)+1
     square_root_limiter = int(square_root/6)+1
 
@@ -55,6 +62,9 @@ def is_prime(num):
     return True
 
 def prime_factor(num):
+    """
+    Find the prime factors of a given number.
+    """
     
     square_root = np.emath.sqrt(num).astype(int)+1
     square_root_limiter = int(square_root/6)+1
@@ -80,6 +90,9 @@ def prime_factor(num):
     return primes
 
 def calculate_n_phi(p,q):
+    """
+    Calculate the product n and Euler's phi function (phi_n) for given prime numbers p and q.
+    """
     
     n = p*q
     phi_n = (p-1)*(q-1)
@@ -87,7 +100,9 @@ def calculate_n_phi(p,q):
     return n,phi_n
 
 def calculate_gcd(lnum, mnum):
-    
+    """
+    Calculate the greatest common divisor (gcd) of lnum and mnum using the Euclidean Algorithm.
+    """
     #print("lnum: {}, mnum: {}".format(lnum, mnum))
     
     a = lnum
@@ -107,7 +122,9 @@ def calculate_gcd(lnum, mnum):
     return gcd
 
 def multiply_mod_square(num, e, n):
-    
+    """
+    Calculate (num^e) % n using the square-and-multiply algorithm.
+    """
     current_mod = 1
     
     for i in range(0,e):
@@ -117,6 +134,10 @@ def multiply_mod_square(num, e, n):
     return current_mod
 
 def square_multiply(num, e, n):
+    """
+    Calculate (num^e) % n using the square-and-multiply algorithm.
+    """
+    
     exp_bin = bin(e)
     # print(exp_bin, len(exp_bin))
     current_mod = 1

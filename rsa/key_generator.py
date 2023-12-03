@@ -2,11 +2,12 @@ import numpy as np
 from math_operations import *
 from bin_operations import *
 
-first_primes = [2,3,5,7]
-
 def generate_num(min_num=32768, max_num=65535, d_type=np.uint16):
 
-    # Generate a random 16-bit unsigned integer
+    """
+        Generate a random 16-bit unsigned integer
+    """
+    
     par = True
     random = 0
     while par:
@@ -18,6 +19,9 @@ def generate_num(min_num=32768, max_num=65535, d_type=np.uint16):
 
 
 def generate_prime():
+    """
+    Generate two prime numbers and return them as a list.
+    """
     primes_generated = False
     nums_lists = []
     
@@ -35,7 +39,9 @@ def generate_prime():
 
 
 def look_for_prime(num):
-    
+    """
+    Look for a prime number around the given number.
+    """
     square_root = np.emath.sqrt(num).astype(int)+1
     square_root_limiter = int(square_root/6)+1
 
@@ -60,18 +66,24 @@ def look_for_prime(num):
     exit(1)
 
 def generate_public_key(phi_n):
-    
+    """
+    Generate a public key using a prime number function.
+    """
     e = look_for_prime(phi_n)
     return e
 
 def calculate_private_key(e, phi_n):
-    
+    """
+    Calculate the private key using the modular multiplicative inverse.
+    """
     gcd, d = calculate_gcd_inverse(e,phi_n)
     
     return d
     
 def load_information(e,p,q):
-    
+    """
+    Load information including n, phi_n, and private key d.
+    """
     n,phi_n = calculate_n_phi(p,q)
     
     d = calculate_private_key(e, phi_n)
@@ -79,6 +91,9 @@ def load_information(e,p,q):
     return n,phi_n,d
 
 def decouple_m(c, d, p, q):
+    """
+    Decouple the encrypted message using the Chinese Remainder Theorem.
+    """
     temp_mp = c%p
     temp_dp = d%(p-1)
     mp = (temp_mp**temp_dp)%p
@@ -99,7 +114,9 @@ def decouple_m(c, d, p, q):
     return m
 
 def encrypt(e, n, message):
-    
+    """
+    Encrypt a message using a public key and return the encrypted values.
+    """
     message_segments = chunk_text(message)
     # print(message_segments)
     
@@ -119,6 +136,9 @@ def encrypt(e, n, message):
 
 def decipher(d, n, p,q, encrypted_values):
     
+    """
+    Decipher an encrypted message using the private key and prime factors.
+    """
     
     # p_prime, q_prime = prime_factor(n)
     # print("p: {}, q: {}".format(p_prime, q_prime))
@@ -143,6 +163,9 @@ def decipher(d, n, p,q, encrypted_values):
     return message
 
 def sign(d, n, message):
+    """
+    Sign a message using the private key and return the signed values.
+    """
     
     message_segments = chunk_text(message)
     
@@ -158,6 +181,9 @@ def sign(d, n, message):
     return signed_values   
 
 def verify(e, n, signed_values):
+    """
+    Verify a message's signature using the public key and return the message.
+    """
     
     message_values = []
     for i in range(len(signed_values)):
@@ -175,6 +201,9 @@ def verify(e, n, signed_values):
     return message
 
 def initialize():
+    """
+    Initialize the encryption system and print key information.
+    """
     
     primes = generate_prime()
     print("p: {}, q: {}".format(primes[0], primes[1]))
@@ -198,7 +227,9 @@ def initialize():
 
 
 def test():
-    
+    """
+    Test encryption, decryption, and signing of a message.
+    """
     e = 32771
     p = 49123
     q = 57301
@@ -231,6 +262,9 @@ def test():
 
 
 def test_signature():
+    """
+    Test signature verification using predefined parameters.
+    """
     
     e = 672961497
     n = 3497594377
@@ -243,6 +277,9 @@ def test_signature():
     
 
 if __name__=="__main__":
+    """
+    Entry point for the script, initializing and testing the encryption system.
+    """
     
     initialize()
     test()
